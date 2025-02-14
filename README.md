@@ -469,7 +469,7 @@ controller:
             - ru-central1-d
 ```
 
-Запустим и посмотри на результат.
+Запустим
 
 ```text
 helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx -f values.yaml --create-namespace -n ingress-nginx
@@ -484,6 +484,110 @@ helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx -f values.yaml 
 Теперь переведем все наши сервисы на `ClusterIP` и напишем для них ingress манифесты:
 
 ![image-22](https://github.com/user-attachments/assets/0b214986-213d-49bf-a245-ca4ef8bda957)
+
+Перегонфигурируем сервисы графаны, изменим `values` и передеплоим
+
+```text
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+grafana:
+  adminPassword: "admin"
+  service:
+    type: ClusterIP
+
+alertmanager:
+  enabled: true
+  service:
+    type: ClusterIP
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
+```
+
+Теперь приступим к тому что создадим ingress-manifests для наших сервисов, один будет для нашего приложения второй для мониторинга
+
+NGINX
+
+```text
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sypchik-nginx-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: nginx.sypchik.kuber
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sypchik-nginx
+            port:
+              number: 80
+```
+
+Monitoring
+
+```text
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: grafana.sypchik.kuber
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-grafana
+            port:
+              number: 80
+  - host: prometnode.sypchik.kuber
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-kube-prometheus-prometheus
+            port:
+              number: 9090
+  - host: alertm.sypchik.kuber
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-kube-prometheus-alertmanager
+            port:
+              number: 9093
+```
+
+Задеплоим
+
+```text
+kubectl apply -f nginx-app-ingress.yaml
+kubectl apply -f grafana-ingress.yaml
+```
 
 ## Проверка
 

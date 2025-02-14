@@ -9,13 +9,13 @@
 5. Настроить CI для автоматической сборки и тестирования.
 6. Настроить CD для автоматического развёртывания приложения.
 
-## Пояснение
+### Пояснение
 
-Дипломный проект состоит из 6 частей, каждая часть будет выведена в отдельном блоке.
+Дипломный проект состоит из 4 частей, каждая часть будет выведена в отдельном блоке.
 
 Краткое пояснение по выполнения я приложу сразу и так-же пояснения будут по ходу выполнения задания
 
-### Terraform
+## Terraform
 
 1. Все дефолтные переменные для проекта описанны в `default.auto.tfvars`
 2. Персональные переменные (которые не стоит помещать в репоситорий) находяться в `personal.auto.tfvars` 
@@ -47,8 +47,7 @@
 
 Структура `Ansible` :
 
-```
-
+```text
 ansible/
 ├── ansible.cfg
 ├── ansible_log
@@ -121,12 +120,10 @@ ansible/
 
 ![image-1](https://github.com/user-attachments/assets/a769b0f3-1ccd-4080-942b-2d129be82975)
 
-
 ![image-2](https://github.com/user-attachments/assets/8edc6703-6e63-4452-9a25-c5872e99cd28)
 
-
 ### Почему столько машин и для чего это?
-    
+
 Моя попытка сделать кластер высокой доступности приближенный к кластеру реализованному на физическом железе. В данном случае есть по машине HAProxy в каждой из зон доступности.
 
 ![image-3](https://github.com/user-attachments/assets/c48da82d-dc09-46f5-a447-d90e613c7856)
@@ -165,7 +162,7 @@ ansible/
 
 После отработки ansible мы получаем которые хосты с уже скачаными пакетами, установленными системными параметрами, сгенерированным конфигурационным файлом для kubeadm (установка кластера так же выполняется с его помощью), все что требуется от нас это подлючиться на мастер ноду, добавать в этот конфиг файл адрес узла с которого будет произвадиться развертывание `advertiseAddress:` если надо поменять сети `podSubnet:` `serviceSubnet:` и выполнить команду по миграции шаблона конфиг файла в "полный" конфиг файл после чего инициализацировать кластер.
 
-```
+```text
 kubeadm config migrate --old-config <path-to-old.yaml> --new-config <path-to-new.yaml>
 
 sudo kubeadm init --config=<path-init.yaml> --upload-certs
@@ -173,14 +170,13 @@ sudo kubeadm init --config=<path-init.yaml> --upload-certs
 
 После чего мы получаем готовый кластер с подключение через ControlPlaneEndpoint что говорит что нас кластер является кластером высокой доступности. После чего мы можем ввести в кластер остальные мастер узлы и узлы воркеры. В дальнейшем для простаты вывод будет через k9s.
 
-### Вот мы и получили готовый кластер:
+### Вот мы и получили готовый кластер
 
 ![image-11](https://github.com/user-attachments/assets/112ed197-3579-48e5-a0a8-a5014193e8d2)
 
 Проверим ноды и поды соответствуют свои ip
 
 ![image-12](https://github.com/user-attachments/assets/6debb215-7e0a-407f-8586-b29555da9b04)
-
 
 # Часть 3
 
@@ -194,8 +190,7 @@ sudo kubeadm init --config=<path-init.yaml> --upload-certs
 
 ![image-13](https://github.com/user-attachments/assets/43b52605-daed-473b-987f-37f5024b4d3b)
 
-
-# Часть 3
+# Часть 4
 
 ## Подготовка cистемы мониторинга и деплой приложения
 
@@ -203,21 +198,22 @@ sudo kubeadm init --config=<path-init.yaml> --upload-certs
 
 Система мониторинга будет разворачиваться с помощь Helm-charts'a 
 
-Скачаем и установим:
-```
+Скачаем и установим
+
+```text
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ```
 
+## Добавим charts
 
-Добавим charts:
-```
+```text
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 ```
 
 Для предварительного тестирования создадим values файл для запуска чарта, где укажем нужные нам параметры и что запустить надо на NodePort:
 
-```
+```text
 ubuntu@master-a:~/k8s_conf$ cat values-monitor.yaml
 prometheus:
   prometheusSpec:
@@ -247,14 +243,14 @@ kubeStateMetrics:
 
 Запуск:
 
-```
+```text
 helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -f values-monitor.yaml -n
  monitoring --create-namespace
 ```
 
 Для проверки у нас поднят на jump-server nginx и сделаны два конфига на проксирование запросов:
 
-```
+```text
 root@jump:/etc/nginx/sites-enabled# cat grafana.conf
 server {
   listen 8080;
@@ -297,7 +293,7 @@ root@jump:/etc/nginx/sites-enabled#
 
 Применим чарт, запусти nginx на jump и проверим что имеем доступ к сервисам:
 
-```
+```text
 helm upgrade --install monitoring prometheus-community/kube-prometheus-stack   -f values-monitor.yaml -n monitoring --create-namespace
 
 Release "monitoring" has been upgraded. Happy Helming!
@@ -335,8 +331,9 @@ Visit https://github.com/prometheus-operator/kube-prometheus for instructions on
 Теперь задеплоим в кубер наше прилодение из репозитория на github для проверки
 Так как контейнер задеплоен в github и является приватным нужно сделать секрет для kubernetes и использовать его для загрузки
 
-### Создание секрета:
-```
+### Создание секрета
+
+```text
 kubectl create secret docker-registry ghcr-secret \
 --docker-server=ghcr.io \
 --docker-username=<user_name> \
@@ -348,7 +345,7 @@ kubectl create secret docker-registry ghcr-secret \
 
 ### Nginx
 
-```
+```text
 root@jump:/etc/nginx/sites-enabled# cat diplom.conf
 server {
   listen 8082;
@@ -369,9 +366,9 @@ location / {
 }
 ```
 
-### Deploy/svc:
+### Deploy/svc
 
-```
+```text
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -411,16 +408,15 @@ spec:
   type: NodePort
 ```
 
-
-### Pods:
+### Pods
 
 ![image-16](https://github.com/user-attachments/assets/b7d4802c-671b-4fd8-872b-66695eadc99b)
 
-### SVC:
+### SVC
 
 ![image-17](https://github.com/user-attachments/assets/b12ff6a4-b2c3-4557-95f5-6ead619c34d4)
 
-### Browser:
+### Browser
 
 ![image-18](https://github.com/user-attachments/assets/5cd4adde-95a1-4204-b0bd-abc1aff2f854)
 
@@ -433,13 +429,13 @@ spec:
 
 ## Выбор воркеров
 
-Для разделения `nodes` по зонам, что бы в дальнейшем можно было деплоить сервисы на разные зоны доступности стоит промаркеровать их, возьмем пример как советует YC для разделения по зонам `https://yandex.cloud/ru/docs/managed-kubernetes/concepts/usage-recommendations`, так же для начала укажем что каждая первая нода (kw01-<x>) это `ingress-worker` 
+Для разделения `nodes` по зонам, что бы в дальнейшем можно было деплоить сервисы на разные зоны доступности стоит промаркеровать их, возьмем пример как советует YC для разделения по зонам `https://yandex.cloud/ru/docs/managed-kubernetes/concepts/usage-recommendations`, так же для начала укажем что каждая первая нода (kw01-x) это `ingress-worker`
 
 Так же в дальнейшем передеплоим наши сервисы так что бы они находились хотя бы в 2-х зонах доступности
 
-### Установи метки на воркеры:
+### Установи метки на воркеры
 
-```
+```text
 kubectl label nodes <node-name> topology.kubernetes.io/zone=ru-central1-<x>
 kubectl label nodes <node-name> role=ingress-worker
 ```
@@ -449,7 +445,7 @@ kubectl label nodes <node-name> role=ingress-worker
 Ingress мы так же будем деплоить черех helm.
 Для начала напишем `values` с нужными нам параметрами:
 
-```
+```text
 controller:
   ingressClass: nginx
   replicaCount: 3
@@ -475,27 +471,27 @@ controller:
 
 Запустим и посмотри на результат.
 
-```
+```text
 helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx -f values.yaml --create-namespace -n ingress-nginx
 ```
-
 
 ### Pods
 
 ![image-21](https://github.com/user-attachments/assets/5c46daf5-8868-47d2-9eb7-af101d26faea)
 
 ### SVC
+
 Теперь переведем все наши сервисы на `ClusterIP` и напишем для них ingress манифесты:
 
 ![image-22](https://github.com/user-attachments/assets/0b214986-213d-49bf-a245-ca4ef8bda957)
 
 ## Проверка
 
-### Первый Вариант:
-   
+### Первый Вариант
+
 После деплоя мы проверим сервисы на доступность через внешний ip, так как у нас нет DNS-домена который будет резолвить нам адреса воспользуемся `curl` и передадим загоовок `-H "Host: <svc_name>.sypchik.kuber"`
 
-```
+```text
 ubuntu@master-a:~/k8s_conf/nginx$ kubectl apply -f grafana-ingress.yaml
 ingress.networking.k8s.io/monitoring-ingress configured
 
@@ -539,11 +535,11 @@ ubuntu@master-a:~/k8s_conf/nginx$ curl  -H "Host: nginx.sypchik.kuber" http://84
 ubuntu@master-a:~/k8s_conf/nginx$
 ```
 
-### Второй вариант:
+### Второй вариант
 
 Для проверки доступности мы можем сделать следующее просто добавим в файл `C:\Windows\System32\drivers\etc\hosts` список наших адресов:
 
-```
+```text
 ...
 # End of section
 
@@ -569,8 +565,6 @@ ubuntu@master-a:~/k8s_conf/nginx$
 
 ![image-26](https://github.com/user-attachments/assets/fd9eb833-1b67-40ee-a55b-c18b39dcb11f)
 
-
-
 # Часть 4
 
-### CI/CD
+## CI/CD

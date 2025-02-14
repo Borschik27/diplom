@@ -119,39 +119,43 @@ ansible/
 
 После выполнения комады `terraform apply --auto-approve` получаем следующую структуру в облаке:
 
-![cloud](image-1.png)
+![image-1](https://github.com/user-attachments/assets/a769b0f3-1ccd-4080-942b-2d129be82975)
 
 
+![image-2](https://github.com/user-attachments/assets/8edc6703-6e63-4452-9a25-c5872e99cd28)
 
-![vm1](image-2.png)
 
 ### Почему столько машин и для чего это?
     
 Моя попытка сделать кластер высокой доступности приближенный к кластеру реализованному на физическом железе. В данном случае есть по машине HAProxy в каждой из зон доступности.
 
-![hap](image-3.png)
+![image-3](https://github.com/user-attachments/assets/c48da82d-dc09-46f5-a447-d90e613c7856)
 
 Они образую группу к которой обращается внешний балансировщик нагрузки и проверяет что узлы HAProxy а следовательно и зоны не упали (на живом железе это имитация связки HAProxy + KeepAlived), NLB в данном случае выступает в виде выделенного виртуального адреса, так как сам keepalived не получается настроить в облаке.
 
-![hap-cgroup](image-4.png)
+![image-4](https://github.com/user-attachments/assets/917029e2-dabe-47eb-8ac1-cd5fae6720e1)
 
-![hap-lb](image-5.png)
+![image-5](https://github.com/user-attachments/assets/6f261fcb-7ad3-4d56-932a-02d4ae185845)
 
 Дальше все давольно понятно по одному `мастер` узлу и по два `воркер` kubernetes в каждай зоне, `jump-server` через который происходит настройка каждого узла с помощью ansible он так же выступает в качестве nginx-proxy (т.е через конфиг файлы я проксирую порты на сервисы) для тестово отладочных работ с выведеными наружу сервисами kubernetes. И три NAT инстанса для выхода узлов в сеть.
 
 ### VPC/Subnet
-![vpc](image-6.png)
 
-![nat](image-7.png)
+![image-6](https://github.com/user-attachments/assets/54b1e8c6-dd89-4947-9d0d-f8771819cfae)
+
+![image-7](https://github.com/user-attachments/assets/464af6b4-7c71-42cd-986a-cab3dd24e020)
 
 ### Список внешних IP
-![ip](image-8.png)
+
+![image-8](https://github.com/user-attachments/assets/31c7ee79-6cd7-4d16-b8b7-c02bafc60f9d)
 
 ### Структура облочной сети
-![map-cloud](image-9.png)
+
+![image-9](https://github.com/user-attachments/assets/fb6c5c28-58a3-43fa-ad82-abe655b55833)
 
 ### Bucket.tf
-![bucket-tfstate](image-10.png)
+
+![image-10](https://github.com/user-attachments/assets/9baaad65-d11b-481b-944d-bce806550973)
 
 # Часть 2
 
@@ -171,11 +175,11 @@ sudo kubeadm init --config=<path-init.yaml> --upload-certs
 
 ### Вот мы и получили готовый кластер:
 
-![kuber-nodes](image-11.png)
+![image-11](https://github.com/user-attachments/assets/112ed197-3579-48e5-a0a8-a5014193e8d2)
 
 Проверим ноды и поды соответствуют свои ip
 
-![pods](image-12.png)
+![image-12](https://github.com/user-attachments/assets/6debb215-7e0a-407f-8586-b29555da9b04)
 
 
 # Часть 3
@@ -188,7 +192,7 @@ sudo kubeadm init --config=<path-init.yaml> --upload-certs
 
 Вот что представляет из себя стартовая страница:
 
-![nginx-proj](image-13.png)
+![image-13](https://github.com/user-attachments/assets/43b52605-daed-473b-987f-37f5024b4d3b)
 
 
 # Часть 3
@@ -320,11 +324,11 @@ Visit https://github.com/prometheus-operator/kube-prometheus for instructions on
 
 В графане срузу выведим дашборд который нам покажет что есть метрики с node_exporter с узлов:
 
-![grafana](image-14.png)
+![image-14](https://github.com/user-attachments/assets/0277c598-8630-4c21-aa64-e84743b111bc)
 
 В алертменеджере увидим что у нас есть правила:
 
-![alertm](image-15.png)
+![image-15](https://github.com/user-attachments/assets/d266cec6-fa7d-4849-98a6-cd462d38697e)
 
 Как видим наши сервисы удачно запустились.
 
@@ -409,14 +413,16 @@ spec:
 
 
 ### Pods:
-![pod-nginx](image-16.png)
+
+![image-16](https://github.com/user-attachments/assets/b7d4802c-671b-4fd8-872b-66695eadc99b)
 
 ### SVC:
-![svc-nginx](image-17.png)
+
+![image-17](https://github.com/user-attachments/assets/b12ff6a4-b2c3-4557-95f5-6ead619c34d4)
 
 ### Browser:
 
-![web-nginx](image-18.png)
+![image-18](https://github.com/user-attachments/assets/5cd4adde-95a1-4204-b0bd-abc1aff2f854)
 
 Как видно сервисы работаеют.
 
@@ -476,12 +482,12 @@ helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx -f values.yaml 
 
 ### Pods
 
-![pods-ingress](image-21.png)
+![image-21](https://github.com/user-attachments/assets/5c46daf5-8868-47d2-9eb7-af101d26faea)
 
 ### SVC
 Теперь переведем все наши сервисы на `ClusterIP` и напишем для них ingress манифесты:
 
-![svc-clusterip](image-22.png)
+![image-22](https://github.com/user-attachments/assets/0b214986-213d-49bf-a245-ca4ef8bda957)
 
 ## Проверка
 
@@ -549,19 +555,19 @@ ubuntu@master-a:~/k8s_conf/nginx$
 
 ### Grafana
 
-![grafana-rem](image-23.png)
+![image-23](https://github.com/user-attachments/assets/04e9eca1-02f7-4307-894a-88cc80926a49)
 
 ### AlertManager
 
-![alertm-rem](image-24.png)
+![image-24](https://github.com/user-attachments/assets/3d551e05-b1bd-4048-a0be-33c40d097b5a)
 
 ### Prometheus
 
-![prometheus-rem](image-25.png)
+![image-25](https://github.com/user-attachments/assets/4213db59-e725-4c64-a180-cc67b795fa1f)
 
 ### MyAPP
 
-![nginx-rem](image-26.png)
+![image-26](https://github.com/user-attachments/assets/fd9eb833-1b67-40ee-a55b-c18b39dcb11f)
 
 
 

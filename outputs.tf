@@ -38,5 +38,18 @@ output "vm_details" {
         zone      = instance.zone
       }
     }
+    jump_server = {
+      value = {
+        hostname  = yandex_compute_instance.jump_server.hostname
+        ip        = try(yandex_compute_instance.jump_server.network_interface[0].nat_ip_address, "N/A")
+        local_ip  = yandex_compute_instance.jump_server.network_interface[0].ip_address
+        zone      = yandex_compute_instance.jump_server.zone
+      }
+    }
+    lb_addresses = {
+      value = [
+        for addr in yandex_vpc_address.lb-addr : addr.external_ipv4_address[0].address
+      ]
+    }
   }
 }

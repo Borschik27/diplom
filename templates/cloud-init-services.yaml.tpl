@@ -18,3 +18,6 @@ write_files:
 
 runcmd:
   - systemctl restart ssh
+
+packages:
+  - ${pack}

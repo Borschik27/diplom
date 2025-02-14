@@ -108,72 +108,143 @@ variable "route_table_name" {
 }
 
 ### LoadBalancer/ LoadBalancer Group ###
-variable "group_lb_name" {
+variable "group_lb_name_kuber" {
   description = "Group name LB"
   type        = string
 }
 
-variable "lb_name" {
+variable "lb_name_kuber" {
   description = "LB Name"
   type        = string
 }
 
-variable "lb_type" {
+variable "lb_type_kuber" {
   description = "LB Type (internal/external)"
   type        = string
 }
 
-variable "lb_del_prot" {
+variable "lb_del_prot_kuber" {
   description = "Deleting protection"
   type        = bool
 }
 
-variable "lb_list_name" {
+variable "lb_list_name_kuber" {
   description = "LB listener name"
   type        = string
 }
 
-variable "lb_list_port" {
+variable "lb_list_port_kuber" {
   description = "lb listener port"
   type        = number
 }
 
-variable "lb_list_tport" {
+variable "lb_list_tport_kuber" {
   description = "LB listener target pot"
   type        = number
 }
 
-variable "lb_list_protocol" {
+variable "lb_list_protocol_kuber" {
   description = "LB listener protocol"
   type        = string
 }
 
-variable "lb_health_name" {
+variable "lb_health_name_kuber" {
   description = "Health name LB"
   type        = string
 }
 
-variable "lb_health_interval" {
+variable "lb_health_interval_kuber" {
   description = "Heath intarval (sec)"
   type        = number
 }
 
-variable "lb_health_tout" {
+variable "lb_health_tout_kuber" {
   description = "Health timeout (sec)"
   type        = number
 }
 
-variable "lb_health_unhthr" {
+variable "lb_health_unhthr_kuber" {
   description = "Threshold for number of failed checks"
   type        = number
 }
 
-variable "lb_health_healthr" {
+variable "lb_health_healthr_kuber" {
   description = "Threshold for number of successful checks"
   type        = number
 }
 
-variable "lb_health_port" {
+variable "lb_health_port_kuber" {
+  description = "Health port"
+  type        = number
+}
+
+
+variable "group_lb_name_ingress" {
+  description = "Group name LB"
+  type        = string
+}
+
+variable "lb_name_ingress" {
+  description = "LB Name"
+  type        = string
+}
+
+variable "lb_type_ingress" {
+  description = "LB Type (internal/external)"
+  type        = string
+}
+
+variable "lb_del_prot_ingress" {
+  description = "Deleting protection"
+  type        = bool
+}
+
+variable "lb_list_name_ingress" {
+  description = "LB listener name"
+  type        = string
+}
+
+variable "lb_list_port_ingress" {
+  description = "lb listener port"
+  type        = number
+}
+
+variable "lb_list_tport_ingress" {
+  description = "LB listener target pot"
+  type        = number
+}
+
+variable "lb_list_protocol_ingress" {
+  description = "LB listener protocol"
+  type        = string
+}
+
+variable "lb_health_name_ingress" {
+  description = "Health name LB"
+  type        = string
+}
+
+variable "lb_health_interval_ingress" {
+  description = "Heath intarval (sec)"
+  type        = number
+}
+
+variable "lb_health_tout_ingress" {
+  description = "Health timeout (sec)"
+  type        = number
+}
+
+variable "lb_health_unhthr_ingress" {
+  description = "Threshold for number of failed checks"
+  type        = number
+}
+
+variable "lb_health_healthr_ingress" {
+  description = "Threshold for number of successful checks"
+  type        = number
+}
+
+variable "lb_health_port_ingress" {
   description = "Health port"
   type        = number
 }

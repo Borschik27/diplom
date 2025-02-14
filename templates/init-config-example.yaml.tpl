@@ -11,4 +11,4 @@ networking:
   podSubnet: 192.168.240.0/24
   serviceSubnet: 10.96.0.0/24
   dnsDomain: cluster.local
-controlPlaneEndpoint: 158.160.58.183:6443
+controlPlaneEndpoint: ${ip}:6443

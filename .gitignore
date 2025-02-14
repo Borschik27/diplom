@@ -45,3 +45,4 @@ backend.tf
 *.example
 .ansible
 cloud-init-web.yaml*
+*.cfg

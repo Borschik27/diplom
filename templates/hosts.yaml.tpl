@@ -4,7 +4,7 @@ all:
       ansible_connection: local
 %{ for vm_name, vm_data in vm_details ~}
     ${vm_name}:
-      ansible_host: ${vm_data.ip}
+      ansible_host: ${vm_data.local_ip}
       ansible_user: ${vm_user}
       ansible_port: 22
       ansible_connection: ssh
@@ -30,7 +30,7 @@ all:
 
     kuber:
       children:
-        master:
+        masters:
           hosts:
 %{ for vm_name, vm_data in vm_details ~}
 %{ if startswith(vm_name, "master") ~}
@@ -38,7 +38,7 @@ all:
 %{ endif ~}
 %{ endfor ~}
 
-        worker:
+        workers:
           hosts:
 %{ for vm_name, vm_data in vm_details ~}
 %{ if startswith(vm_name, "kw") ~}

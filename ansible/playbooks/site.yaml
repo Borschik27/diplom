@@ -1,6 +1,12 @@
 ---
-- name: Config local
-  hosts: localhost
+# - name: Config local
+#   hosts: localhost
+
+- name: Install ha-proxy
+  hosts: ha-proxy
+  become: true
+  roles:
+    - keep-ha
 
 - name: Install master
   hosts: masters
@@ -13,9 +19,4 @@
   become: true
   roles:
     - worker
-
-- name: Install ha-proxy
-  hosts: ha-proxy
-  become: true
-  roles:
-    - keep-ha
+    

@@ -28,9 +28,6 @@ backend kube-apiserver
   option tcp-check
   balance roundrobin
   default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
-
-  server master-ru-central1-a 10.10.10.5:6443 check
-
-  server master-ru-central1-b 10.10.20.5:6443 check
-
-  server master-ru-central1-d 10.10.30.5:6443 check
+%{ for name, instance in vm_details }
+  server ${name} ${instance.local_ip}:6443 check
+%{ endfor }

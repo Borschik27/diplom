@@ -672,3 +672,200 @@ ubuntu@master-a:~/k8s_conf/nginx$
 # Часть 4
 
 ## CI/CD
+
+Так как я сейчас в основном работаю с GitHub, то буду использовать `GitHub Action`:
+Для этого перейдем в репозитории с приложением в `Action` и создадим наш CI/CD pipeline на основе `Docker Image`
+
+### Описание
+
+В нашем проекте будет две ветки main/dev
+
+1. Ветка `main` будет содержать pipeline для образа latest и будет редеплоить уже созданный нами ранее deployment в нашем kuber-сластере с main версией приложения
+2. Ветка `dev` создаст новый deployment который будет деплоить приложение с тэгом v*
+3. Также в pipeline при обновление репозиторя dev создается новый контейнер с новым тэгом где обновляется path (3-третье число)
+4. Деплой в кубер осуществляется через pipeline, создан секрет `${{ secrets.KUBE_CONF }}` который привязан к репозиторию в нем содержется файл
+`~/.kube/config` который был закодирован с помошью команды 
+
+```
+cat ~/.kube/config | base64 -w 0
+```
+
+5. Для работы pipeline создан токен который содержит ключ для работы с хранлищем GitHub Packeges `${{ secrets.PRWT }}`
+
+Вот наш получившийся pipeline:
+
+```
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - "main"
+      - "dev"
+  pull_request:
+    branches:
+      - "main"
+      - "dev"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.PRWT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Define branch and tags
+      id: vars
+      run: |
+        if [[ "${{ github.ref_name }}" == "main" ]]; then
+          IMAGE_TAG="latest"
+        else
+          # Проверяем, есть ли теги
+          tags=$(gh api "https://api.github.com/users/${{ github.repository_owner }}/packages/container/diplom-nginx-app/versions" \
+          --jq 'map(select(.metadata.container.tags | contains(["latest"]) | not)) | sort_by(.updated_at) | last | .metadata.container.tags[0]')
+
+          if [[ -z "$tags" || "$tags" == "null" ]]; then
+            # Если тегов нет, начинаем с 0.0.1
+            new_tag="0.0.1"
+          else
+            # Если теги есть, увеличиваем значение на 1
+            latest_tag=$(echo "$tags" | sort -V | tail -n 1)
+            IFS='.' read -ra parts <<< "$latest_tag"
+            new_tag="${parts[0]}.${parts[1]}.$((${parts[2]} + 1))"
+          fi
+          
+          IMAGE_TAG="$new_tag"
+        fi
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        echo "Using tag: $IMAGE_TAG"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag test-build:${{ env.IMAGE_TAG }}
+
+    - name: Run the Docker container
+      run: |
+        docker run -d -p 8080:80 --name test-container test-build:${{ env.IMAGE_TAG }}
+
+    - name: Check if the website is available
+      run: |
+        curl --fail http://localhost:8080 || exit 1
+
+    - name: Tag and push Docker image
+      run: |
+        REPO_NAME=$(echo "${{ github.repository_owner }}/diplom-nginx-app" | tr '[:upper:]' '[:lower:]')
+
+        docker tag test-build:${{ env.IMAGE_TAG }} ghcr.io/$REPO_NAME:${{ env.IMAGE_TAG }}
+        docker push ghcr.io/$REPO_NAME:${{ env.IMAGE_TAG }}
+
+    - name: Set up kubectl and deploy test app
+      run: |
+        if [[ "${{ github.ref_name }}" == "dev" ]]; then
+          mkdir -p $HOME/.kube/
+          echo "${{ secrets.KUBE_CONF }}" | base64 --decode > $HOME/.kube/config
+          REPO_NAME=$(echo "${{ github.repository_owner }}/diplom-nginx-app" | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG="${{ env.IMAGE_TAG }}"
+
+
+          cat <<EOF > k8s-deployment.yaml
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test-nginx
+          labels:
+            app: test-nginx
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: test-nginx
+          template:
+            metadata:
+              labels:
+                app: test-nginx
+            spec:
+              imagePullSecrets:
+              - name: ghcr-secret
+              containers:
+              - name: test-nginx
+                image: ghcr.io/$REPO_NAME:$IMAGE_TAG
+                ports:
+                - containerPort: 80
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test-nginx
+        spec:
+          selector:
+            app: test-nginx
+          ports:
+            - protocol: TCP
+              port: 80
+              targetPort: 80
+          type: ClusterIP
+        ---
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test-nginx-ingress
+          annotations:
+            kubernetes.io/ingress.class: "nginx"
+        spec:
+          ingressClassName: nginx
+          rules:
+          - host: test-nginx.sypchik.kuber
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: test-nginx
+                    port:
+                      number: 80
+        EOF
+          kubectl apply -f k8s-deployment.yaml
+        else
+          mkdir -p $HOME/.kube/
+          echo "${{ secrets.KUBE_CONF }}" | base64 --decode > $HOME/.kube/config
+          kubectl rollout restart deployment sypchik-nginx -n default
+        fi
+
+    - name: Clean up manifest file
+      run: |
+        rm -f k8s-deployment.yaml
+        rm -rf $HOME/.kube/
+        
+    - name: Stop and remove the container
+      run: |
+        docker stop test-container
+        docker rm test-container
+
+```
+
+### Тестирование
+
+Внесем изменения в `dev` ветку и посмотри выполнение pipeline
+
+![dev-repo](image-29.png)
+
+![ation-dev](image-30.png)
+
+![action-dev-list](image-31.png)
+
+![web-test-1-dev](image-32.png)
+
+Обновим до версии 2 
+
+![action-dev-v2](image-33.png)
+
+![action-dev-list-v2](image-34.png)
+
+![web-test-2-dev](image-35.png)
+

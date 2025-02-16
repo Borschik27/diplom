@@ -794,6 +794,7 @@ jobs:
               containers:
               - name: test-nginx
                 image: ghcr.io/$REPO_NAME:$IMAGE_TAG
+                imagePullPolicy: Always
                 ports:
                 - containerPort: 80
         ---
@@ -853,19 +854,32 @@ jobs:
 
 Внесем изменения в `dev` ветку и посмотри выполнение pipeline
 
-![dev-repo](image-29.png)
+Репозиторий
 
-![ation-dev](image-30.png)
+![image-29](https://github.com/user-attachments/assets/727d8841-1949-40a7-86f0-ef1ea2536c8b)
 
-![action-dev-list](image-31.png)
+Успешное выполнение
 
-![web-test-1-dev](image-32.png)
+![image-30](https://github.com/user-attachments/assets/15ad3b4f-8d10-4025-8ad9-c4cb5ec5b690)
 
-Обновим до версии 2 
+Посмотрим процесс
 
-![action-dev-v2](image-33.png)
+![image-31](https://github.com/user-attachments/assets/0f123a8e-4dc1-4c66-9717-dfb2515bb7ed)
 
-![action-dev-list-v2](image-34.png)
+Перейдем на наш сайт
 
-![web-test-2-dev](image-35.png)
+![image-32](https://github.com/user-attachments/assets/361116b8-f27d-4221-b86f-0ee6e42de874)
 
+### Обновим до версии 2 
+
+Видим что pipeline отработал успешно
+
+![image-33](https://github.com/user-attachments/assets/5086b1f7-8ea4-4111-83bd-7de979384e54)
+
+Проверим как обстоят дела с pipeline
+
+![image-34](https://github.com/user-attachments/assets/dddead08-f061-4e46-8ce0-93aec4c1b986)
+
+Посмотри как теперь выглядит наш тестовый сайт:
+
+![image-35](https://github.com/user-attachments/assets/665075b8-1f0e-48c7-8a77-4fde3409b2cb)

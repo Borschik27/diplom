@@ -102,7 +102,7 @@ jobs:
             skip_s3_checksum            = true
 
             access_key = "$SAK"
-            secret_key = "$SSK"
+            secret_key = "$SAS"
           }
         }
         EOF

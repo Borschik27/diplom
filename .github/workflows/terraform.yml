@@ -92,7 +92,7 @@ jobs:
             endpoints = {
               s3 = "https://storage.yandexcloud.net"
             }
-            bucket = "$BUCKET"
+            bucket = $BUCKET
             region = "ru-central1"
             key    = "state/terraform.tfstate"
 
@@ -101,8 +101,8 @@ jobs:
             skip_requesting_account_id  = true
             skip_s3_checksum            = true
 
-            access_key = "$SAK"
-            secret_key = "$SAS"
+            access_key = $SAK
+            secret_key = $SAS
           }
         }
         EOF

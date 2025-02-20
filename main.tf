@@ -556,52 +556,52 @@ resource "local_file" "ansible_inventory" {
 }
 
 ### Render ansible.cfg ###
-# resource "local_file" "ansible_cfg" {
-#   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
+resource "local_file" "ansible_cfg" {
+  depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
-#   filename = "./ansible/ansible.cfg"
-#   content = templatefile("./templates/ansible.cfg.tpl", {
-#     ip   = yandex_compute_instance.jump_server.network_interface[0].nat_ip_address
-#     user = var.vm_user
-#   })
-# }
+  filename = "./ansible/ansible.cfg"
+  content = templatefile("./templates/ansible.cfg.tpl", {
+    ip   = yandex_compute_instance.jump_server.network_interface[0].nat_ip_address
+    user = var.vm_user
+  })
+}
 
-# ### Render haproxy.cfg ###
-# resource "local_file" "haproxy_conf" {
-#   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
+### Render haproxy.cfg ###
+resource "local_file" "haproxy_conf" {
+  depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
-#   filename = "./ansible/roles/keep-ha/files/haproxy.cfg"
-#   content = templatefile("./templates/haproxy.cfg.tpl", {
-#     vm_details = { for instance in yandex_compute_instance.kubernetes :
-#       instance.name => {
-#         hostname = instance.hostname
-#         local_ip = instance.network_interface[0].ip_address
-#       }
-#     }
-#   })
-# }
+  filename = "./ansible/roles/keep-ha/files/haproxy.cfg"
+  content = templatefile("./templates/haproxy.cfg.tpl", {
+    vm_details = { for instance in yandex_compute_instance.kubernetes :
+      instance.name => {
+        hostname = instance.hostname
+        local_ip = instance.network_interface[0].ip_address
+      }
+    }
+  })
+}
 
-# ### Render example init conif file for kuber ###
-# resource "local_file" "kuber_init_conf" {
-#   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
+### Render example init conif file for kuber ###
+resource "local_file" "kuber_init_conf" {
+  depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
-#   filename = "./ansible/roles/kuber/files/init-config-example.yaml"
-#   content = templatefile("./templates/init-config-example.yaml.tpl", {
-#     ip = yandex_vpc_address.lb-addr[0].external_ipv4_address[0].address
-#   })
-# }
+  filename = "./ansible/roles/kuber/files/init-config-example.yaml"
+  content = templatefile("./templates/init-config-example.yaml.tpl", {
+    ip = yandex_vpc_address.lb-addr[0].external_ipv4_address[0].address
+  })
+}
 
-# ### Start ansible playbook ###
-# resource "null_resource" "ansible_apply" {
-#   provisioner "local-exec" {
-#     command = <<EOT
-#       ANSIBLE_CONFIG=./ansible/ansible.cfg  ansible-playbook -i ./ansible/inventory/hosts.yaml ./ansible/playbooks/site.yaml
-#     EOT
+### Start ansible playbook ###
+resource "null_resource" "ansible_apply" {
+  provisioner "local-exec" {
+    command = <<EOT
+      ANSIBLE_CONFIG=./ansible/ansible.cfg  ansible-playbook -i ./ansible/inventory/hosts.yaml ./ansible/playbooks/site.yaml
+    EOT
 
-#     environment = {
-#       ANSIBLE_HOST_KEY_CHECKING = "false"
-#     }
-#   }
+    environment = {
+      ANSIBLE_HOST_KEY_CHECKING = "false"
+    }
+  }
 
-#   depends_on = [local_file.ansible_inventory, local_file.ansible_cfg]
-# }
+  depends_on = [local_file.ansible_inventory, local_file.ansible_cfg]
+}

@@ -34,35 +34,18 @@ jobs:
       run: echo "${{ secrets.TERRAFORMRC }}" > ~/.terraformrc
 
     - name: Воссоздание personal.auto.tfvars
-      run: echo "${{ secrets.TFVARS_PERSON }}" > ./personal.auto.tfvars
+      run: echo "${{ secrets.TFVARS_PERSON }}" | base64 --decode > ./personal.auto.tfvars
 
     - name: Воссоздание backend.tf
-      run: |
-        export SAK="${{ secrets.AK }}"
-        export SAS="${{ secrets.SK }}"
-        export BUCKET="${{ secrets.BKT_YC }}"
-        
-        cat <<EOF > ./backend.tf
-        terraform {
-          backend "s3" {
-            endpoints = {
-              s3 = "https://storage.yandexcloud.net"
-            }
-            
-            bucket = "$BUCKET"
-            region = "ru-central1"
-            key    = "state/terraform.tfstate"
+      run: echo "${{ secrets.TFVARS_PERSON }}" | base64 --decode > ./backend.tf
 
-            skip_region_validation      = true
-            skip_credentials_validation = true
-            skip_requesting_account_id  = true
-            skip_s3_checksum            = true
-            
-            access_key = "$SAK"
-            secret_key = "$SAS"
-          }
-        }
-        EOF
+    - name: Воссоздание ys.key
+      run: |
+        mkdir -p ~/.config/yandex-cloud
+        echo "${{ secrets.YC_KEY }}" | base64 --decode > ~/.config/yandex-cloud/.key.json
+
+    - name: Воссоздание id_rsa
+      run: echo "${{ secrets.SSH_KEY }}" | base64 --decode > ~/.ssh/id_rsa
         
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.    
     - name: Terraform Init

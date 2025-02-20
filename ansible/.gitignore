@@ -1,2 +1,3 @@
 hosts.yaml
 ansible_log
+ansible.cfg

@@ -260,4 +260,3 @@
     dest: /home/ubuntu/
   loop:
     - init-config-example.yaml
-    - metallb-confmap-example.yaml

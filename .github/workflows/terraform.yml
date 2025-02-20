@@ -81,7 +81,31 @@ jobs:
       run: echo "${{ secrets.TFVARS_PERSON }}" > ./personal.auto.tfvars
 
     - name: Воссоздание backend.tf
-      run: echo "${{ secrets.TF_BACKEND }}" > ./backend.tf
+      run: |
+        SAK = "${{ secrets.AK }}"
+        SAS = "${{ secrets.SK }}"
+        BUCKET = "${{ secrets.BKT_YC }}"
+        
+        cat <<EOF > ./backend.tf
+        terraform {
+          backend "s3" {
+            endpoints = {
+              s3 = "https://storage.yandexcloud.net"
+            }
+            bucket = "$BUCKET"
+            region = "ru-central1"
+            key    = "state/terraform.tfstate"
+
+            skip_region_validation      = true
+            skip_credentials_validation = true
+            skip_requesting_account_id  = true
+            skip_s3_checksum            = true
+
+            access_key = "$SAK"
+            secret_key = "$SSK"
+          }
+        }
+        EOF
 
     - name: Проверка файлов
       run: cat ./backend.tf

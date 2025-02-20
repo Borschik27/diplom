@@ -595,7 +595,7 @@ resource "local_file" "kuber_init_conf" {
 resource "null_resource" "ansible_apply" {
   provisioner "local-exec" {
     command = <<EOT
-      ansible-playbook -vvvv -i ${path.module}/ansible/inventory/hosts.yaml ${path.module}/ansible/playbooks/site.yaml -e "ansible_ssh_extra_args='-o StrictHostKeyChecking=no'"
+      ansible-playbook -vvvv -i ${path.module}/ansible/inventory/hosts.yaml ${path.module}/ansible/playbooks/site.yaml -e "ansible_ssh_extra_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
     EOT
 
     environment = {

@@ -64,6 +64,10 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
 
+    - name: ls
+      run: | 
+        ls -la ~/.ssh/
+        cat ~/.ssh/id_rsa
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan -input=false

@@ -883,3 +883,114 @@ jobs:
 Посмотри как теперь выглядит наш тестовый сайт:
 
 ![image-35](https://github.com/user-attachments/assets/665075b8-1f0e-48c7-8a77-4fde3409b2cb)
+
+# Часть 5 
+
+## Перенос проекта в git репозиторй и создание pipelines terraform
+
+В конце работы перенесем наш проект в Github и создадим для него pipeline который будет нам обновлять настройки при изменении репозитория main
+
+### Создадим pipeline
+
+.github/workflows/terraform.yml
+
+```
+name: 'Terraform'
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: production
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Воссоздание .terraformrc
+      run: echo "${{ secrets.TERRAFORMRC }}" > ~/.terraformrc
+
+    - name: Воссоздание personal.auto.tfvars
+      run: echo "${{ secrets.TFVARS_PERSON }}" | base64 --decode > ./personal.auto.tfvars
+
+    - name: Воссоздание backend.tf
+      run: echo "${{ secrets.TF_BACKEND }}" | base64 --decode > ./backend.tf
+
+    - name: Воссоздание ys.key
+      run: |
+        mkdir -p ~/.config/yandex-cloud
+        echo "${{ secrets.YC_KEY }}" | base64 --decode > ~/.config/yandex-cloud/.key.json
+
+    - name: Воссоздание id_rsa
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY }}" | base64 --decode > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        eval $(ssh-agent -s)
+        ssh-add ~/.ssh/id_rsa
+        
+        cat <<EOF > ~/.ssh/config
+        Host *
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
+        
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.    
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform validate
+      run: terraform validate
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      run: terraform fmt -check
+
+    # Generates an execution plan for Terraform
+    - name: Terraform Plan
+      run: terraform plan -input=false
+      
+      # On push to "main", build or change infrastructure according to Terraform configuration files
+      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+    - name: Terraform Apply
+      if: ${{ github.ref_name }} == "main" &&  ${{ github.event_name }} == 'push'
+      run: terraform apply -auto-approve -input=false
+```
+
+Все ключи и конфиг файлы были добавлены в секреты данного проекта таким же способом который описан при добавлении ключей для нашего проекта тестового приложения `cat <file-name> | base64 -w 0`
+
+### Опишем не стандартные шаги которые представлены в данном yaml
+
+1. `- name: Воссоздание *` - описывает востановление конфигурационных файлов для работы нашего проекта
+2. `- name: Воссоздание id_rsa` - В данном случае описанно как настроить ипользование закрытого ключа, потребуется это для дальнейшего использования `resource "null_resource" "ansible_apply"`
+
+Видим что наш pipeline после определенных доработок собрался
+
+![image](https://github.com/user-attachments/assets/a916b047-d9a3-49fa-97c7-2833a007365c)
+
+![image](https://github.com/user-attachments/assets/7c8eea34-4545-4114-bf59-0c4c8529fdd8)
+
+Как можно увидеть у нас отработал наш ansible 
+![image](https://github.com/user-attachments/assets/40d43c7e-9edb-434a-9235-880aaa4804c1)
+

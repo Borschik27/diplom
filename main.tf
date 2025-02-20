@@ -595,7 +595,7 @@ resource "local_file" "kuber_init_conf" {
 resource "null_resource" "ansible_apply" {
   provisioner "local-exec" {
     command = <<EOT
-      ansible-playbook -v -i ${path.module}/ansible/inventory/hosts.yaml ${path.module}/ansible/playbooks/site.yaml
+      ansible-playbook -i ${path.module}/ansible/inventory/hosts.yaml ${path.module}/ansible/playbooks/site.yaml
     EOT
 
     environment = {

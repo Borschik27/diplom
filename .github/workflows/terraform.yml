@@ -53,6 +53,8 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_KEY }}" | base64 --decode > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
+        eval $(ssh-agent -s)
+        ssh-add ~/.ssh/id_rsa
         
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.    
     - name: Terraform Init
@@ -64,12 +66,6 @@ jobs:
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       run: terraform fmt -check
-
-    - name: ls
-      run: | 
-        ls -la ~/.ssh/
-        cat ~/.ssh/id_rsa
-        ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan

@@ -84,3 +84,4 @@ jobs:
         ls -l ansible/roles/keep-ha/files/
         ls -l ansible/inventory/
         ls -l ansible/roles/kuber/files
+        cat ansible/ansible.cfg

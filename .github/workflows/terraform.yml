@@ -53,6 +53,15 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_KEY }}" | base64 --decode > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
+        eval $(ssh-agent -s)
+        ssh-add ~/.ssh/id_rsa
+        
+        cat <<EOF > ~/.ssh/config
+        Host *
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
         
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.    
     - name: Terraform Init
@@ -65,34 +74,12 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
 
-    - name: ls
-      run: | 
-        ls -la ~/.ssh/
-        cat ~/.ssh/id_rsa
-        ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
-
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan -input=false
       
-    #- name: ls
-    #  run: | 
-    #    ls -l 
-    #    ls -l ansible
-    #    ls -l ansible/roles/keep-ha/files/
-    #    ls -l ansible/inventory/
-    #    ls -l ansible/roles/kuber/files
       # On push to "main", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
     - name: Terraform Apply
       if: ${{ github.ref_name }} == "main" &&  ${{ github.event_name }} == 'push'
       run: terraform apply -auto-approve -input=false
-
-    - name: ls
-      run: | 
-        ls -l 
-        ls -l ansible
-        ls -l ansible/roles/keep-ha/files/
-        ls -l ansible/inventory/
-        ls -l ansible/roles/kuber/files
-        cat ansible/ansible.cfg

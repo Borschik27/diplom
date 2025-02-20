@@ -4,22 +4,22 @@ resource "yandex_vpc_network" "sypchik" {
 }
 
 resource "yandex_vpc_subnet" "public" {
-    count = length(var.zones)
+  count = length(var.zones)
 
-    name           = "${var.subnet_name_pub}-${var.zones[count.index]}"
-    zone           = var.zones[count.index]
-    network_id     = yandex_vpc_network.sypchik.id
-    v4_cidr_blocks = [var.public_cidr[count.index]]
+  name           = "${var.subnet_name_pub}-${var.zones[count.index]}"
+  zone           = var.zones[count.index]
+  network_id     = yandex_vpc_network.sypchik.id
+  v4_cidr_blocks = [var.public_cidr[count.index]]
 }
 
 resource "yandex_vpc_subnet" "cluster" {
-    count = length(var.zones)
+  count = length(var.zones)
 
-    name           = "${var.subnet_name_priv}-${var.zones[count.index]}"
-    zone           = var.zones[count.index]
-    network_id     = yandex_vpc_network.sypchik.id
-    v4_cidr_blocks = [var.private_cidr[count.index]]
-    route_table_id = yandex_vpc_route_table.nat_instance_route[var.zones[count.index]].id
+  name           = "${var.subnet_name_priv}-${var.zones[count.index]}"
+  zone           = var.zones[count.index]
+  network_id     = yandex_vpc_network.sypchik.id
+  v4_cidr_blocks = [var.private_cidr[count.index]]
+  route_table_id = yandex_vpc_route_table.nat_instance_route[var.zones[count.index]].id
 }
 
 ###### Init Static Public address ######
@@ -27,7 +27,7 @@ resource "yandex_vpc_subnet" "cluster" {
 resource "yandex_vpc_address" "nat_addr" {
   count = length(var.zones)
 
-  name = "nat-ip-${var.zones[count.index]}"
+  name                = "nat-ip-${var.zones[count.index]}"
   deletion_protection = false
   external_ipv4_address {
     zone_id = var.zones[count.index]
@@ -38,7 +38,7 @@ resource "yandex_vpc_address" "nat_addr" {
 resource "yandex_vpc_address" "lb-addr" {
   count = 2
 
-  name = "lb-ip${count.index}"
+  name                = "lb-ip${count.index}"
   deletion_protection = false
   external_ipv4_address {
     zone_id = "ru-central1-a"
@@ -98,50 +98,50 @@ data "template_file" "cloudinit_2404" {
 
 ###### Create NAT Instances ######
 resource "yandex_compute_instance" "nat" {
-    for_each = var.vms_resources_nat
-    
-    name        = "${each.value.name}-${each.value.zone}"
-    platform_id = each.value.platform_id
-    zone        = each.value.zone
-    hostname    = each.value.hostname
+  for_each = var.vms_resources_nat
 
-    metadata = {
-        user-data          = data.template_file.cloudinit_services.rendered
-        serial-port-enable = 1
-    }
+  name        = "${each.value.name}-${each.value.zone}"
+  platform_id = each.value.platform_id
+  zone        = each.value.zone
+  hostname    = each.value.hostname
 
-    resources {
-        cores         = each.value.cores
-        memory        = each.value.memory
-        core_fraction = each.value.core_fraction
-    }
+  metadata = {
+    user-data          = data.template_file.cloudinit_services.rendered
+    serial-port-enable = 1
+  }
 
-    boot_disk {
-        initialize_params {
-            image_id = each.value.services_image_id
-            size = each.value.hdd_size
-            type = each.value.hdd_type
-        }
-    }
+  resources {
+    cores         = each.value.cores
+    memory        = each.value.memory
+    core_fraction = each.value.core_fraction
+  }
 
-    network_interface {
-        subnet_id   = yandex_vpc_subnet.public[index(var.zones, each.value.zone)].id
-        nat         = each.value.nat_status
-        ip_address  = each.value.local_ip
-        security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
-        nat_ip_address = yandex_vpc_address.nat_addr[index(var.zones, each.value.zone)].external_ipv4_address[0].address
+  boot_disk {
+    initialize_params {
+      image_id = each.value.services_image_id
+      size     = each.value.hdd_size
+      type     = each.value.hdd_type
     }
+  }
+
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.public[index(var.zones, each.value.zone)].id
+    nat                = each.value.nat_status
+    ip_address         = each.value.local_ip
+    security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
+    nat_ip_address     = yandex_vpc_address.nat_addr[index(var.zones, each.value.zone)].external_ipv4_address[0].address
+  }
 }
 
 ###### Create Route Table ######
 resource "yandex_vpc_route_table" "nat_instance_route" {
-  for_each  = var.vms_resources_nat
+  for_each = var.vms_resources_nat
 
   name       = "${var.route_table_name}-${each.value.zone}"
   network_id = yandex_vpc_network.sypchik.id
   static_route {
     destination_prefix = "0.0.0.0/0"
-    next_hop_address = yandex_compute_instance.nat[each.key].network_interface[0].ip_address
+    next_hop_address   = yandex_compute_instance.nat[each.key].network_interface[0].ip_address
   }
 }
 
@@ -229,7 +229,7 @@ resource "yandex_vpc_security_group" "nat_instance_sg" {
     v4_cidr_blocks = ["10.10.0.0/16"]
     port           = 179
   }
-  
+
   ingress {
     protocol       = "TCP"
     description    = "Calico health check"
@@ -276,82 +276,82 @@ resource "yandex_vpc_security_group" "nat_instance_sg" {
 
 ###### Create HA Proxy Instances ######
 resource "yandex_compute_instance" "ha" {
-    for_each = var.vms_resources_ha
+  for_each = var.vms_resources_ha
 
-    name        = "${each.value.name}-${each.value.zone}"
-    platform_id = each.value.platform_id
-    zone        = each.value.zone
-    hostname    = each.value.hostname
+  name        = "${each.value.name}-${each.value.zone}"
+  platform_id = each.value.platform_id
+  zone        = each.value.zone
+  hostname    = each.value.hostname
 
-    metadata = {
-        user-data          = data.template_file.cloudinit_2404.rendered
-        serial-port-enable = 1
+  metadata = {
+    user-data          = data.template_file.cloudinit_2404.rendered
+    serial-port-enable = 1
+  }
+
+  resources {
+    cores         = each.value.cores
+    memory        = each.value.memory
+    core_fraction = each.value.core_fraction
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.my_image.id
+      size     = each.value.hdd_size
+      type     = each.value.hdd_type
     }
+  }
 
-    resources {
-        cores         = each.value.cores
-        memory        = each.value.memory
-        core_fraction = each.value.core_fraction
-    }
-
-    boot_disk {
-        initialize_params {
-            image_id = data.yandex_compute_image.my_image.id
-            size = each.value.hdd_size
-            type = each.value.hdd_type
-        }
-    }
-
-    network_interface {
-        subnet_id   = yandex_vpc_subnet.cluster[index(var.zones, each.value.zone)].id
-        nat         = each.value.nat_status
-        ip_address  = each.value.local_ip
-        security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
-    }
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.cluster[index(var.zones, each.value.zone)].id
+    nat                = each.value.nat_status
+    ip_address         = each.value.local_ip
+    security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
+  }
 }
 
 
 ###### Create LoadBalancer group ######
 ###  HAProxy ###
 resource "yandex_lb_target_group" "ha-proxy" {
-    name      = var.group_lb_name_kuber
-    folder_id = var.folder_id
+  name      = var.group_lb_name_kuber
+  folder_id = var.folder_id
 
-    dynamic "target" {
-      for_each = yandex_compute_instance.ha
+  dynamic "target" {
+    for_each = yandex_compute_instance.ha
 
-      content {
-        subnet_id = target.value.network_interface[0].subnet_id
-        address = target.value.network_interface[0].ip_address
-      } 
+    content {
+      subnet_id = target.value.network_interface[0].subnet_id
+      address   = target.value.network_interface[0].ip_address
     }
+  }
 }
 
 ### Nginx-Ingress ###
 resource "yandex_lb_target_group" "nginx-ingress" {
-    name      = var.group_lb_name_ingress
-    folder_id = var.folder_id
+  name      = var.group_lb_name_ingress
+  folder_id = var.folder_id
 
-    dynamic "target" {
-      for_each = {
-        for k, v in yandex_compute_instance.kubernetes_workers : k => v
-        if substr(k, 0, 4) == "w01-"
-      }
-
-      content {
-        subnet_id = target.value.network_interface[0].subnet_id
-        address = target.value.network_interface[0].ip_address
-      } 
+  dynamic "target" {
+    for_each = {
+      for k, v in yandex_compute_instance.kubernetes_workers : k => v
+      if substr(k, 0, 4) == "w01-"
     }
+
+    content {
+      subnet_id = target.value.network_interface[0].subnet_id
+      address   = target.value.network_interface[0].ip_address
+    }
+  }
 }
 
 ###### Create External LoadBalancer ######
 ### LoadBalancer for ControlEndpointPalne ###
 resource "yandex_lb_network_load_balancer" "external-lb-kuber" {
-  name               = var.lb_name_kuber
-  type               = var.lb_type_kuber
+  name                = var.lb_name_kuber
+  type                = var.lb_type_kuber
   deletion_protection = var.lb_del_prot_kuber
-  folder_id          = var.folder_id
+  folder_id           = var.folder_id
 
   listener {
     name        = var.lb_list_name_kuber
@@ -381,10 +381,10 @@ resource "yandex_lb_network_load_balancer" "external-lb-kuber" {
 
 ### LoadBalancer for Kubernetes nginx-ingress ###
 resource "yandex_lb_network_load_balancer" "external-lb-ingress" {
-  name               = var.lb_name_ingress
-  type               = var.lb_type_ingress
+  name                = var.lb_name_ingress
+  type                = var.lb_type_ingress
   deletion_protection = var.lb_del_prot_ingress
-  folder_id          = var.folder_id
+  folder_id           = var.folder_id
 
   listener {
     name        = var.lb_list_name_ingress
@@ -437,15 +437,15 @@ resource "yandex_compute_instance" "kubernetes" {
   boot_disk {
     initialize_params {
       image_id = data.yandex_compute_image.my_image.id
-      size = each.value.hdd_size
-      type = each.value.hdd_type
+      size     = each.value.hdd_size
+      type     = each.value.hdd_type
     }
   }
 
   network_interface {
-    subnet_id   = yandex_vpc_subnet.cluster[index(var.zones, each.value.zone)].id
-    nat         = each.value.nat_status
-    ip_address  = each.value.local_ip
+    subnet_id          = yandex_vpc_subnet.cluster[index(var.zones, each.value.zone)].id
+    nat                = each.value.nat_status
+    ip_address         = each.value.local_ip
     security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
   }
 }
@@ -473,51 +473,51 @@ resource "yandex_compute_instance" "kubernetes_workers" {
   boot_disk {
     initialize_params {
       image_id = data.yandex_compute_image.my_image.id
-      size = each.value.hdd_size
-      type = each.value.hdd_type
+      size     = each.value.hdd_size
+      type     = each.value.hdd_type
     }
   }
 
   network_interface {
-    subnet_id   = yandex_vpc_subnet.cluster[index(var.zones, each.value.zone)].id
-    nat         = each.value.nat_status
-    ip_address  = each.value.local_ip
+    subnet_id          = yandex_vpc_subnet.cluster[index(var.zones, each.value.zone)].id
+    nat                = each.value.nat_status
+    ip_address         = each.value.local_ip
     security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
   }
 }
 
 ###### SSH Jump Server ######
 resource "yandex_compute_instance" "jump_server" {
-    name        = "jump-server"
-    platform_id = "standard-v3"
-    zone        = "ru-central1-a" 
-    hostname    = "jump"
+  name        = "jump-server"
+  platform_id = "standard-v3"
+  zone        = "ru-central1-a"
+  hostname    = "jump"
 
-    metadata = {
-        user-data          = data.template_file.cloudinit_jump.rendered
-        serial-port-enable = 1
-    }
+  metadata = {
+    user-data          = data.template_file.cloudinit_jump.rendered
+    serial-port-enable = 1
+  }
 
-    resources {
-        cores         = 2
-        memory        = 2
-        core_fraction = 20
-    }
+  resources {
+    cores         = 2
+    memory        = 2
+    core_fraction = 20
+  }
 
-    boot_disk {
-        initialize_params {
-            image_id =  data.yandex_compute_image.my_image.id
-            size = 15
-            type = "network-hdd"
-        }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.my_image.id
+      size     = 15
+      type     = "network-hdd"
     }
+  }
 
-    network_interface {
-        subnet_id   = yandex_vpc_subnet.public[0].id
-        nat         = "true"
-        ip_address  = "192.168.10.8"
-        security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
-    }
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.public[0].id
+    nat                = "true"
+    ip_address         = "192.168.10.8"
+    security_group_ids = [yandex_vpc_security_group.nat_instance_sg.id]
+  }
 }
 
 
@@ -528,30 +528,30 @@ resource "local_file" "ansible_inventory" {
   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
   filename = "${path.module}/ansible/inventory/hosts.yaml"
-  content  = templatefile("${path.module}/templates/hosts.yaml.tpl", {
+  content = templatefile("${path.module}/templates/hosts.yaml.tpl", {
     vm_details = merge(
       { for vm in yandex_compute_instance.kubernetes : vm.name => {
-          ip       = vm.network_interface[0].nat_ip_address
-          local_ip = vm.network_interface[0].ip_address
+        ip       = vm.network_interface[0].nat_ip_address
+        local_ip = vm.network_interface[0].ip_address
         }
       },
       { for vm in yandex_compute_instance.kubernetes_workers : vm.name => {
-          ip       = vm.network_interface[0].nat_ip_address
-          local_ip = vm.network_interface[0].ip_address
+        ip       = vm.network_interface[0].nat_ip_address
+        local_ip = vm.network_interface[0].ip_address
         }
       },
       { for vm in yandex_compute_instance.ha : vm.name => {
-          ip       = vm.network_interface[0].nat_ip_address
-          local_ip = vm.network_interface[0].ip_address
+        ip       = vm.network_interface[0].nat_ip_address
+        local_ip = vm.network_interface[0].ip_address
         }
       },
       { for vm in yandex_compute_instance.nat : vm.name => {
-          ip       = vm.network_interface[0].nat_ip_address
-          local_ip = vm.network_interface[0].ip_address
+        ip       = vm.network_interface[0].nat_ip_address
+        local_ip = vm.network_interface[0].ip_address
         }
       }
     )
-    vm_user    = var.vm_user
+    vm_user = var.vm_user
   })
 }
 
@@ -560,8 +560,8 @@ resource "local_file" "ansible_cfg" {
   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
   filename = "${path.module}/ansible/ansible.cfg"
-  content  = templatefile("${path.module}/templates/ansible.cfg.tpl", {
-    ip = yandex_compute_instance.jump_server.network_interface[0].nat_ip_address
+  content = templatefile("${path.module}/templates/ansible.cfg.tpl", {
+    ip   = yandex_compute_instance.jump_server.network_interface[0].nat_ip_address
     user = var.vm_user
   })
 }
@@ -571,11 +571,11 @@ resource "local_file" "haproxy_conf" {
   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
   filename = "${path.module}/ansible/roles/keep-ha/files/haproxy.cfg"
-  content  = templatefile("${path.module}/templates/haproxy.cfg.tpl", {
+  content = templatefile("${path.module}/templates/haproxy.cfg.tpl", {
     vm_details = { for instance in yandex_compute_instance.kubernetes :
       instance.name => {
-        hostname  = instance.hostname
-        local_ip  = instance.network_interface[0].ip_address
+        hostname = instance.hostname
+        local_ip = instance.network_interface[0].ip_address
       }
     }
   })
@@ -586,7 +586,7 @@ resource "local_file" "kuber_init_conf" {
   depends_on = [yandex_compute_instance.kubernetes, yandex_compute_instance.kubernetes_workers, yandex_compute_instance.ha]
 
   filename = "${path.module}/ansible/roles/kuber/files/init-config-example.yaml"
-  content  = templatefile("${path.module}/templates/init-config-example.yaml.tpl", {
+  content = templatefile("${path.module}/templates/init-config-example.yaml.tpl", {
     ip = yandex_vpc_address.lb-addr[0].external_ipv4_address[0].address
   })
 }

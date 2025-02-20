@@ -1,22 +1,22 @@
 ###### Personal variables ######
 variable "cloud_id" {
-  type        = string
+  type = string
 }
 
 variable "folder_id" {
-  type        = string
+  type = string
 }
 
 variable "services_acc_id" {
-  type        = string
+  type = string
 }
 
 variable "vms_ssh_root_key" {
-  type        = string 
+  type = string
 }
 
 variable "vms_ssh_root_key_file" {
-  type        = string 
+  type = string
 }
 
 variable "ppkyc" {
@@ -270,51 +270,51 @@ variable "vms_resources_nat" {
 
 variable "vms_resources_ha" {
   type = map(object({
-    name              = string
-    cores             = number
-    memory            = number
-    hdd_size          = number
-    hdd_type          = string
-    core_fraction     = number
-    platform_id       = string
-    hostname          = string
-    nat_status        = bool
-    zone              = string
-    local_ip          = string
-    cidr_block        = string
+    name          = string
+    cores         = number
+    memory        = number
+    hdd_size      = number
+    hdd_type      = string
+    core_fraction = number
+    platform_id   = string
+    hostname      = string
+    nat_status    = bool
+    zone          = string
+    local_ip      = string
+    cidr_block    = string
   }))
 }
 
 variable "vms_resources_kuber_master" {
   type = map(object({
-    name              = string
-    cores             = number
-    memory            = number
-    hdd_size          = number
-    hdd_type          = string
-    core_fraction     = number
-    platform_id       = string
-    hostname          = string
-    nat_status        = bool
-    zone              = string
-    local_ip          = string
-    cidr_block        = string
+    name          = string
+    cores         = number
+    memory        = number
+    hdd_size      = number
+    hdd_type      = string
+    core_fraction = number
+    platform_id   = string
+    hostname      = string
+    nat_status    = bool
+    zone          = string
+    local_ip      = string
+    cidr_block    = string
   }))
 }
 
 variable "vms_resources_kuber_worker" {
   type = map(object({
-    name              = string
-    cores             = number
-    memory            = number
-    hdd_size          = number
-    hdd_type          = string
-    core_fraction     = number
-    platform_id       = string
-    hostname          = string
-    nat_status        = bool
-    zone              = string
-    local_ip          = string
-    cidr_block        = string
+    name          = string
+    cores         = number
+    memory        = number
+    hdd_size      = number
+    hdd_type      = string
+    core_fraction = number
+    platform_id   = string
+    hostname      = string
+    nat_status    = bool
+    zone          = string
+    local_ip      = string
+    cidr_block    = string
   }))
 }

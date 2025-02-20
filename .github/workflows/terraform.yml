@@ -82,9 +82,9 @@ jobs:
 
     - name: Воссоздание backend.tf
       run: |
-        SAK = "${{ secrets.AK }}"
-        SAS = "${{ secrets.SK }}"
-        BUCKET = "${{ secrets.BKT_YC }}"
+        export SAK="${{ secrets.AK }}"
+        export SAS="${{ secrets.SK }}"
+        export BUCKET="${{ secrets.BKT_YC }}"
         
         cat <<EOF > ./backend.tf
         terraform {
@@ -92,7 +92,8 @@ jobs:
             endpoints = {
               s3 = "https://storage.yandexcloud.net"
             }
-            bucket = $BUCKET
+            
+            bucket = "$BUCKET"
             region = "ru-central1"
             key    = "state/terraform.tfstate"
 
@@ -100,13 +101,13 @@ jobs:
             skip_credentials_validation = true
             skip_requesting_account_id  = true
             skip_s3_checksum            = true
-
-            access_key = $SAK
-            secret_key = $SAS
+            
+            access_key = "$SAK"
+            secret_key = "$SAS"
           }
         }
         EOF
-
+        
     - name: Проверка файлов
       run: cat ./backend.tf
  

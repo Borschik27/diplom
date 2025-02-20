@@ -45,7 +45,9 @@ jobs:
         echo "${{ secrets.YC_KEY }}" | base64 --decode > ~/.config/yandex-cloud/.key.json
 
     - name: Воссоздание id_rsa
-      run: echo "${{ secrets.SSH_KEY }}" | base64 --decode > ~/.ssh/id_rsa
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY }}" | base64 --decode > ~/.ssh/id_rsa
         
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.    
     - name: Terraform Init

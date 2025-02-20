@@ -37,7 +37,7 @@ jobs:
       run: echo "${{ secrets.TFVARS_PERSON }}" | base64 --decode > ./personal.auto.tfvars
 
     - name: Воссоздание backend.tf
-      run: echo "${{ secrets.TFVARS_PERSON }}" | base64 --decode > ./backend.tf
+      run: echo "${{ secrets.TF_BACKEND }}" | base64 --decode > ./backend.tf
 
     - name: Воссоздание ys.key
       run: |

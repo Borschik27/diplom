@@ -600,7 +600,7 @@ resource "null_resource" "ansible_apply" {
 
     environment = {
       ANSIBLE_HOST_KEY_CHECKING = "False"
-      ANSIBLE_CONFIG = "${path.module}/ansible/ansible.cfg"
+      ANSIBLE_CONFIG            = "${path.module}/ansible/ansible.cfg"
     }
   }
 

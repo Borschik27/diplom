@@ -603,5 +603,5 @@ resource "null_resource" "ansible_apply" {
     }
   }
 
-  depends_on = [local_file.ansible_inventory, local_file.ansible_cfg, null_resource.wait_for_cloud_init]
+  depends_on = [local_file.ansible_inventory, local_file.ansible_cfg]
 }

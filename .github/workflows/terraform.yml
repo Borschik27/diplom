@@ -55,6 +55,14 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         eval $(ssh-agent -s)
         ssh-add ~/.ssh/id_rsa
+
+        cat <<EOF > ~/.ssh/config
+        Host *
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
+        
         ssh -v -i ~/.ssh/id_rsa ubuntu@158.160.59.255
         
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.    

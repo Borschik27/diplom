@@ -76,3 +76,11 @@ jobs:
     - name: Terraform Apply
       if: ${{ github.ref_name }} == "main" &&  ${{ github.event_name }} == 'push'
       run: terraform apply -auto-approve -input=false
+
+    - name: ls
+      run: | 
+        ls -l 
+        ls -l ansible
+        ls -l ansible/roles/keep-ha/files/
+        ls -l ansible/inventory/
+        ls -l ansible/roles/kuber/files
